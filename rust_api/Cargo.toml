@@ -1,0 +1,12 @@
+[package]
+name = "rust_api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+surrealdb = "2"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+axum = "0.8"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors"] }
