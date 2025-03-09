@@ -75,6 +75,10 @@ impl Applications {
         let applications:Vec<Application> = Vec::new();
         Applications{ applications }
     }
+
+    pub fn add(&mut self, application: Application) {
+        self.applications.push(application);
+    }
 }
 
 // pub struct ThreadPool{

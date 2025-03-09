@@ -18,7 +18,7 @@ use std::net::SocketAddr;
 async fn main() -> surrealdb::Result<()> {
     let cors = CorsLayer::new()
     .allow_origin(Any) // Allow all origins (*)
-    .allow_methods([axum::http::Method::GET, axum::http::Method::PUT]) // Allow GET & PUT
+    .allow_methods(Any) // Allow GET, PUT, DELETE, POST, etc.
     .allow_headers(Any); // Allow all headers
 
     let app = Router::new()
@@ -39,15 +39,26 @@ async fn add_application(Json(payload):Json<Application>) -> impl axum::response
     use serde::Serialize;
 
     let db = DataBase::sign_in("root", "root").await.unwrap();
-    db.create_application(payload).await.unwrap();
+    let result = db.create_application(payload).await.unwrap();
 
     #[derive(Serialize)]
     struct ResponseMessage {
-        message: String,
+        applications: Applications
     }
-    Json(ResponseMessage {
-        message:"Application Created".to_string(),
-    })
+
+    let mut applications = Applications::new();
+
+    match result { Some(result) => {
+        applications.add(result);
+        return Json(ResponseMessage {
+            applications
+        })
+    } 
+    None => {
+        return Json(ResponseMessage {
+            applications
+        })
+    }}
 }
 
 async fn get_all_applications() -> impl axum::response::IntoResponse {
@@ -61,9 +72,9 @@ async fn get_all_applications() -> impl axum::response::IntoResponse {
 
     #[derive(Serialize)]
     struct ResponseMessage {
-        message: Applications,
+        applications: Applications,
     }
     Json(ResponseMessage {
-        message: applications,
+        applications,
     })
 }
