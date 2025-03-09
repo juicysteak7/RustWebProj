@@ -10,19 +10,19 @@ struct ApplicationData {
     applications: Vec<Application>
 }
 
-enum Msg {
-    Fetch,
-    Fetched(ApplicationData),
-    Add(Application)
-}
-
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
 struct Application {
     application_id: String,
     status: String,
 }
 
-struct ApplicationsComponent {
+pub enum Msg {
+    Fetch,
+    Fetched(ApplicationData),
+    Add(Application)
+}
+
+pub struct ApplicationsComponent {
     applications: Option<ApplicationData>,
 }
 
@@ -84,15 +84,6 @@ impl Component for ApplicationsComponent {
     }
 }
 
-#[function_component(App)]
-fn app() -> Html {
-    html! {
-        <div>
-            <ApplicationsComponent />
-        </div>
-    }
-}
-
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
 struct ApplicationResponse {
     applications: ApplicationData
@@ -109,8 +100,4 @@ async fn add_application(application:Application) -> Result<ApplicationData, req
     let response = client.put("http://127.0.0.1:6969/api/add_application").json(&application).send().await?;
     let data = response.json::<ApplicationResponse>().await?;
     Ok(data.applications)
-}
-
-fn main() {
-    yew::start_app::<App>();
 }
