@@ -12,6 +12,7 @@ pub struct Application {
 }
 
 pub enum Msg {
+    Delete,
     Update,
     CloseModal,
     OpenModal,
@@ -20,7 +21,8 @@ pub enum Msg {
 
 #[derive(Properties, PartialEq)]
 pub struct ApplicationProps {
-    pub application: Application
+    pub application: Application,
+    pub application_delete: Callback<Application>
 }
 
 pub struct ApplicationComponent {
@@ -37,7 +39,7 @@ impl Component for ApplicationComponent {
         ApplicationComponent { application: props.application.clone(), is_modal_open: false  }
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, message: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, message: Self::Message) -> bool {
         match message {
             Msg::Update => {
                 log::info!("Update Button Pressed.");
@@ -50,7 +52,7 @@ impl Component for ApplicationComponent {
             Msg::OpenModal => {
                 self.is_modal_open = true;
                 true
-            }
+            },
             Msg::Updated(application_id, status) => {
                 let old_id = self.application.application_id.clone();
                 self.application = Application { application_id: application_id.clone(), status:status.clone() };
@@ -65,6 +67,21 @@ impl Component for ApplicationComponent {
                     }
                 });
                 true
+            },
+            Msg::Delete => {
+                let application = self.application.clone();
+                spawn_local(async move {
+                    match delete_application(application).await {
+                        Ok(result) => {
+                            log::info!("Application deleted: {:?}", result);
+                        }
+                        Err(e) => {
+                            eprintln!("{}",e);
+                        }
+                    }
+                });
+                ctx.props().application_delete.emit(self.application.clone());
+                true
             }
         }
     }
@@ -73,8 +90,14 @@ impl Component for ApplicationComponent {
         let link = ctx.link();
         html! {
             <div>
-                <p>{serde_json::to_string(&self.application).unwrap()}</p>
+                <label for="{application_id_field}"> {" Application Id "} </label>
+                <input disabled={true} id={"application_id_field"} placeholder={self.application.application_id.clone()}/>
+                <br/>
+                <label for="{status_field}"> {" Status "} </label>
+                <input disabled={true} id={"status_field"} placeholder={self.application.status.clone()}/>
+                <br/>
                 <button onclick={link.callback(|_| Msg::OpenModal)}> {"Update"} </button>
+                <button onclick={link.callback(|_| Msg::Delete)}> {"Delete"} </button>
 
                 <UpdateApplicationModal
                 is_open={self.is_modal_open}
@@ -94,6 +117,12 @@ struct ApplicationResponse {
 async fn update_application(application:Application, old_id:String) -> Result<ApplicationData, reqwest::Error> {
     let client = Client::new();
     let response = client.put("http://127.0.0.1:6969/api/update_application").json(&(application,old_id)).send().await?;
+    let data = response.json::<ApplicationResponse>().await?;
+    Ok(data.applications)
+}
+async fn delete_application(application:Application) -> Result<ApplicationData, reqwest::Error> {
+    let client = Client::new();
+    let response = client.put("http://127.0.0.1:6969/api/delete_application").json(&application).send().await?;
     let data = response.json::<ApplicationResponse>().await?;
     Ok(data.applications)
 }

@@ -25,6 +25,7 @@ async fn main() -> surrealdb::Result<()> {
     .route("/api/add_application", put(add_application))
     .route("/api/get_all_applications", get(get_all_applications))
     .route("/api/update_application", put(update_application))
+    .route("/api/delete_application", put(delete_application))
     .layer(cors);
     let addr:SocketAddr = "127.0.0.1:6969".parse().unwrap();
     let listener = TcpListener::bind(&addr).await.unwrap();
@@ -68,6 +69,29 @@ async fn update_application(Json(payload):Json<(Application, String)>) -> impl a
 
     let db = DataBase::sign_in("root", "root").await.unwrap();
     let result = db.update_application(payload.0, payload.1).await.unwrap();
+
+    #[derive(Serialize)]
+    struct ResponseMessage {
+        applications: Applications
+    }
+
+    let mut applications = Applications::new();
+
+    if let Some(app) = result {
+        applications.add(app);
+    }
+
+    return Json(ResponseMessage {
+        applications
+    })
+}
+
+async fn delete_application(Json(payload):Json<Application>) -> impl axum::response::IntoResponse {
+    use axum::Json;
+    use serde::Serialize;
+
+    let db = DataBase::sign_in("root", "root").await.unwrap();
+    let result = db.delete_application(payload).await.unwrap();
 
     #[derive(Serialize)]
     struct ResponseMessage {

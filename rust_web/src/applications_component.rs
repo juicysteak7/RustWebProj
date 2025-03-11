@@ -17,6 +17,7 @@ pub enum Msg {
     Add(Application),
     OpenModal,
     CloseModal,
+    DeleteApplication(Application),
 }
 
 #[derive(Properties, PartialEq, Debug)]
@@ -86,9 +87,13 @@ impl Component for ApplicationsComponent {
             Msg::OpenModal => {
                 self.is_modal_open = true;
                 true
-            }
+            },
             Msg::CloseModal => {
                 self.is_modal_open = false;
+                true
+            },
+            Msg::DeleteApplication(app) => {
+                self.applications.applications.retain(|application| application.application_id != app.application_id);
                 true
             }
         }
@@ -102,7 +107,7 @@ impl Component for ApplicationsComponent {
                 <button onclick={link.callback(|_| Msg::Fetch)}>{ "Fetch Applications" }</button>
                 <button onclick={link.callback(|_| Msg::OpenModal)}>{ "Add Application" }</button>
                 { for self.applications.applications.iter().map(|app| html!{
-                    <ApplicationComponent application={ Application{application_id: app.application_id.clone(), status: app.status.clone() } }/>
+                    <ApplicationComponent application={ Application{application_id: app.application_id.clone(), status: app.status.clone() } } application_delete={link.callback(|app| Msg::DeleteApplication(app))}/>
                 }) }
 
                 <ApplicationModal
