@@ -6,9 +6,38 @@ use wasm_bindgen_futures::spawn_local;
 use crate::{ UpdateApplicationModal, ApplicationData };
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq)]
+pub enum Status {
+    InProgress,
+    Applied,
+    Rejected,
+    Interviewing
+}
+
+impl Status {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Status::Applied => "Applied",
+            Status::Rejected => "Rejected",
+            Status::InProgress => "InProgress",
+            Status::Interviewing => "Interviewing",
+        }
+    }
+
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "Applied" => Status::Applied,
+            "InProgress" => Status::InProgress,
+            "Interviewing" => Status::Interviewing,
+            "Rejected" => Status::Rejected,
+            _ => Status::InProgress,
+        }
+    }
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct Application {
     pub application_id: String,
-    pub status: String,
+    pub status: Status,
 }
 
 pub enum Msg {
@@ -16,7 +45,7 @@ pub enum Msg {
     Update,
     CloseModal,
     OpenModal,
-    Updated(String, String),
+    Updated(String, Status),
 }
 
 #[derive(Properties, PartialEq)]
@@ -55,9 +84,9 @@ impl Component for ApplicationComponent {
             },
             Msg::Updated(application_id, status) => {
                 let old_id = self.application.application_id.clone();
-                self.application = Application { application_id: application_id.clone(), status:status.clone() };
+                self.application = Application { application_id: application_id.clone(), status:Status::from_str(status.as_str()) };
                 spawn_local(async move {
-                    match update_application(Application { application_id, status }, old_id).await {
+                    match update_application(Application { application_id, status: Status::from_str(status.as_str()) }, old_id).await {
                         Ok(result) => {
                             log::info!("Application updated: {:?}", result);
                         }
@@ -94,7 +123,7 @@ impl Component for ApplicationComponent {
                 <input disabled={true} id={"application_id_field"} placeholder={self.application.application_id.clone()}/>
                 <br/>
                 <label for="{status_field}"> {" Status "} </label>
-                <input disabled={true} id={"status_field"} placeholder={self.application.status.clone()}/>
+                <input disabled={true} id={"status_field"} placeholder={self.application.status.as_str()}/>
                 <br/>
                 <button onclick={link.callback(|_| Msg::OpenModal)}> {"Update"} </button>
                 <button onclick={link.callback(|_| Msg::Delete)}> {"Delete"} </button>
@@ -102,7 +131,7 @@ impl Component for ApplicationComponent {
                 <UpdateApplicationModal
                 is_open={self.is_modal_open}
                 on_close={link.callback(|_| Msg::CloseModal)}
-                on_submit={link.callback(|(id, status)| Msg::Updated(id, status))}
+                on_submit={link.callback(|(id, status): (String, Status)| Msg::Updated(id, status))}
                 application_id={self.application.application_id.clone()}
                 status={self.application.status.clone()}
                 />

@@ -4,7 +4,7 @@ use wasm_bindgen_futures::spawn_local;
 // use serde::Deserialize;
 // use serde::Serialize;
 // use serde_json;
-use crate::{ Application, ApplicationComponent, ApplicationModal };
+use crate::{ Application, ApplicationComponent, ApplicationModal, Status };
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct ApplicationData {
@@ -107,13 +107,16 @@ impl Component for ApplicationsComponent {
                 <button onclick={link.callback(|_| Msg::Fetch)}>{ "Fetch Applications" }</button>
                 <button onclick={link.callback(|_| Msg::OpenModal)}>{ "Add Application" }</button>
                 { for self.applications.applications.iter().map(|app| html!{
-                    <ApplicationComponent application={ Application{application_id: app.application_id.clone(), status: app.status.clone() } } application_delete={link.callback(|app| Msg::DeleteApplication(app))}/>
+                    <ApplicationComponent 
+                        application={ Application{application_id: app.application_id.clone(), status: app.status.clone() } } 
+                        application_delete={link.callback(|app| Msg::DeleteApplication(app))}
+                    />
                 }) }
 
                 <ApplicationModal
                     is_open={self.is_modal_open}
                     on_close={link.callback(|_| Msg::CloseModal)}
-                    on_submit={link.callback(|(id, status)| Msg::Add(Application{application_id: id, status }))}
+                    on_submit={link.callback(|(id, status): (String, Status)| Msg::Add(Application{application_id: id, status:Status::from_str(status.as_str()) }))}
                 />
             </div>
         }

@@ -1,5 +1,7 @@
 use yew::prelude::*;
 
+use crate::{ Status };
+
 pub enum Msg {
     Submit,
     Close,
@@ -10,9 +12,9 @@ pub enum Msg {
 #[derive(Properties, PartialEq)]
 pub struct UpdateProps {
     pub on_close: Callback<()>,
-    pub on_submit: Callback<(String, String)>,
+    pub on_submit: Callback<(String, Status)>,
     pub application_id: String,
-    pub status: String,
+    pub status: Status,
     pub is_open: bool,
 }
 pub struct UpdateApplicationModal {
@@ -26,7 +28,7 @@ impl Component for UpdateApplicationModal {
     type Properties = UpdateProps;
 
     fn create(ctx: &Context<Self>) -> Self{
-        Self { application_id: ctx.props().application_id.clone() , status: ctx.props().status.clone() , is_open: ctx.props().is_open }
+        Self { application_id: ctx.props().application_id.clone() , status: ctx.props().status.as_str().to_string() , is_open: ctx.props().is_open }
     }
     fn changed(&mut self, ctx: &Context<Self>) -> bool {
         self.is_open = ctx.props().is_open;
@@ -40,7 +42,7 @@ impl Component for UpdateApplicationModal {
                 false
             }
             Msg::Submit => {
-                ctx.props().on_submit.emit((self.application_id.clone(), self.status.clone()));
+                ctx.props().on_submit.emit((self.application_id.clone(), Status::from_str(self.status.as_str())));
                 ctx.props().on_close.emit(());
                 self.is_open = false;
                 true
