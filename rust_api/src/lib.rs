@@ -24,7 +24,7 @@ impl DataBase {
     }
 
     pub async fn create_application(&self, application:Application) -> Result<Option<Application>, Error>{
-        let created: Option<Application> = self.db.create("application").content(application).await?;
+        let created: Option<Application> = self.db.create(("application", application.application_id.clone())).content(application).await?;
         Ok(created)
     }
 
@@ -33,8 +33,8 @@ impl DataBase {
         Ok(Applications { applications })
     }
 
-    pub async fn update_application(&self, application:Application) -> Result<Vec<Application>, Error>{
-        let updated:Vec<Application> = self.db.update("application").content(application).await?;
+    pub async fn update_application(&self, application:Application, old_id: String) -> Result<Option<Application>, Error>{
+        let updated:Option<Application> = self.db.update(("application", old_id)).content(application).await?;
         Ok(updated)
     }
 
@@ -44,8 +44,7 @@ impl DataBase {
     }
 }
 
-
-#[derive(Debug, Serialize, serde::Deserialize)]
+#[derive(Debug, Serialize, serde::Deserialize, Clone)]
 pub enum Status {
     InProgress,
     Applied,
@@ -53,10 +52,10 @@ pub enum Status {
     Interviewing
 }
 
-#[derive(Debug, Serialize, serde::Deserialize)]
+#[derive(Debug, Serialize, serde::Deserialize, Clone)]
 pub struct Application {
     application_id: String,
-    status: Status,
+    status: Status
 }
 
 impl Application {

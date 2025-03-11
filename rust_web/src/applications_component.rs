@@ -4,7 +4,7 @@ use wasm_bindgen_futures::spawn_local;
 // use serde::Deserialize;
 // use serde::Serialize;
 // use serde_json;
-use crate::{ Application, ApplicationComponent };
+use crate::{ Application, ApplicationComponent, ApplicationModal };
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct ApplicationData {
@@ -102,114 +102,18 @@ impl Component for ApplicationsComponent {
                 <button onclick={link.callback(|_| Msg::Fetch)}>{ "Fetch Applications" }</button>
                 <button onclick={link.callback(|_| Msg::OpenModal)}>{ "Add Application" }</button>
                 { for self.applications.applications.iter().map(|app| html!{
-                    <ApplicationComponent application={ Application{application_id: app.application_id.clone(), status: app.status.clone()} }/>
+                    <ApplicationComponent application={ Application{application_id: app.application_id.clone(), status: app.status.clone() } }/>
                 }) }
 
                 <ApplicationModal
                     is_open={self.is_modal_open}
                     on_close={link.callback(|_| Msg::CloseModal)}
-                    on_submit={link.callback(|(id, status)| Msg::Add(Application{application_id:id, status}))}
+                    on_submit={link.callback(|(id, status)| Msg::Add(Application{application_id: id, status }))}
                 />
             </div>
         }
     }
 }
-
-#[derive(Properties, PartialEq)]
-pub struct ApplicationModalProps {
-    pub on_close: Callback<()>,
-    pub on_submit: Callback<(String, String)>,
-    pub is_open: bool
-}
-
-pub struct ApplicationModal {
-    application_id: String,
-    status: String,
-    is_open: bool,
-}
-
-pub enum ApplicationModalMsg {
-    UpdateApplicationId(String),
-    UpdateStatus(String),
-    Submit,
-    Close,
-    Open,
-}
-
-impl Component for ApplicationModal {
-    type Message = ApplicationModalMsg;
-    type Properties = ApplicationModalProps;
-
-    fn create(ctx: &Context<Self>) -> Self {
-        Self { application_id:"".to_string(), status:"".to_string(), is_open: ctx.props().is_open }
-    }
-
-    fn changed(&mut self, ctx: &Context<Self>) -> bool {
-        self.is_open = ctx.props().is_open;
-        true
-    }
-
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            ApplicationModalMsg::UpdateApplicationId(id) => {
-                self.application_id = id;
-                true
-            }
-            ApplicationModalMsg::UpdateStatus(status) => {
-                self.status = status;
-                true
-            }
-            ApplicationModalMsg::Submit => {
-                ctx.props().on_submit.emit((self.application_id.clone(), self.status.clone()));
-                ctx.props().on_close.emit(());
-                true
-            }
-            ApplicationModalMsg::Close => {
-                self.is_open = false;
-                ctx.props().on_close.emit(());
-                true
-            }
-            ApplicationModalMsg::Open => {
-                self.is_open = true;
-                true
-            }
-        }
-    }
-
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        if !self.is_open {
-            return html! {};
-        }
-
-        let link = ctx.link();
-        html! {
-            <div class="modal-overlay">
-                <div class="modal-content">
-                    <h2>{ "Add Application" }</h2>
-                    <input
-                        placeholder="Application ID"
-                        value={self.application_id.clone()}
-                        oninput={link.callback(|e: InputEvent| {
-                            let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
-                            ApplicationModalMsg::UpdateApplicationId(value)
-                        })}
-                    />
-                    <input
-                        placeholder="Status"
-                        value={self.status.clone()}
-                        oninput={link.callback(|e: InputEvent| {
-                            let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
-                            ApplicationModalMsg::UpdateStatus(value)
-                        })}
-                    />
-                    <button onclick={link.callback(|_| ApplicationModalMsg::Submit)}>{ "Submit" }</button>
-                    <button onclick={link.callback(|_| ApplicationModalMsg::Close)}>{ "Close" }</button>
-                </div>
-            </div>
-        } 
-    }
-}
-
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
 struct ApplicationResponse {

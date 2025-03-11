@@ -24,6 +24,7 @@ async fn main() -> surrealdb::Result<()> {
     let app = Router::new()
     .route("/api/add_application", put(add_application))
     .route("/api/get_all_applications", get(get_all_applications))
+    .route("/api/update_application", put(update_application))
     .layer(cors);
     let addr:SocketAddr = "127.0.0.1:6969".parse().unwrap();
     let listener = TcpListener::bind(&addr).await.unwrap();
@@ -61,20 +62,56 @@ async fn add_application(Json(payload):Json<Application>) -> impl axum::response
     }}
 }
 
+async fn update_application(Json(payload):Json<(Application, String)>) -> impl axum::response::IntoResponse {
+    use axum::Json;
+    use serde::Serialize;
+
+    let db = DataBase::sign_in("root", "root").await.unwrap();
+    let result = db.update_application(payload.0, payload.1).await.unwrap();
+
+    #[derive(Serialize)]
+    struct ResponseMessage {
+        applications: Applications
+    }
+
+    let mut applications = Applications::new();
+
+    if let Some(app) = result {
+        applications.add(app);
+    }
+
+    return Json(ResponseMessage {
+        applications
+    })
+}
+
+
 async fn get_all_applications() -> impl axum::response::IntoResponse {
     use axum::Json;
     use serde::Serialize;
 
     let db = DataBase::sign_in("root", "root").await.unwrap();
-    let applications = db.get_all_applications().await.unwrap();
-
-    println!("Applications: {:?}", applications);
+    let applications = db.get_all_applications().await;
 
     #[derive(Serialize)]
     struct ResponseMessage {
         applications: Applications,
     }
-    Json(ResponseMessage {
-        applications,
-    })
+    match applications {
+        Ok(apps) => {
+            println!("Applications: {:?}", apps);
+
+            Json(ResponseMessage {
+                applications: apps,
+            })
+        }
+        Err(e) => {
+            eprintln!("{}",e);
+
+
+            Json(ResponseMessage {
+                applications: Applications::new(),
+            })
+        }
+    }
 }
