@@ -38,6 +38,8 @@ impl Status {
 pub struct Application {
     pub application_id: String,
     pub status: Status,
+    pub job_title: String,
+    pub location: String,
 }
 
 pub enum Msg {
@@ -45,7 +47,7 @@ pub enum Msg {
     Update,
     CloseModal,
     OpenModal,
-    Updated(String, Status),
+    Updated(Application),
 }
 
 #[derive(Properties, PartialEq)]
@@ -82,11 +84,12 @@ impl Component for ApplicationComponent {
                 self.is_modal_open = true;
                 true
             },
-            Msg::Updated(application_id, status) => {
+            Msg::Updated(app) => {
                 let old_id = self.application.application_id.clone();
-                self.application = Application { application_id: application_id.clone(), status:Status::from_str(status.as_str()) };
+                // self.application = Application { application_id: application_id.clone(), status:Status::from_str(status.as_str()), job_title: job_title.clone(), location: location.clone() };
+                self.application = app.clone();
                 spawn_local(async move {
-                    match update_application(Application { application_id, status: Status::from_str(status.as_str()) }, old_id).await {
+                    match update_application(app, old_id).await {
                         Ok(result) => {
                             log::info!("Application updated: {:?}", result);
                         }
@@ -118,22 +121,19 @@ impl Component for ApplicationComponent {
     fn view(&self, ctx: &Context<Self>) -> Html {
         let link = ctx.link();
         html! {
-            <div>
-                <label for="{application_id_field}"> {" Application Id "} </label>
-                <input disabled={true} id={"application_id_field"} placeholder={self.application.application_id.clone()}/>
-                <br/>
-                <label for="{status_field}"> {" Status "} </label>
-                <input disabled={true} id={"status_field"} placeholder={self.application.status.as_str()}/>
-                <br/>
+            <div class="application-card">
+                <p>{"Application Id: "}{self.application.application_id.clone()}</p>
+                <p>{"Job Title: "}{self.application.job_title.clone()}</p>
+                <p>{"Status: "}{self.application.status.as_str()}</p>
+                <p>{"Location: "}{self.application.location.clone()}</p>
                 <button onclick={link.callback(|_| Msg::OpenModal)}> {"Update"} </button>
                 <button onclick={link.callback(|_| Msg::Delete)}> {"Delete"} </button>
 
                 <UpdateApplicationModal
                 is_open={self.is_modal_open}
                 on_close={link.callback(|_| Msg::CloseModal)}
-                on_submit={link.callback(|(id, status): (String, Status)| Msg::Updated(id, status))}
-                application_id={self.application.application_id.clone()}
-                status={self.application.status.clone()}
+                on_submit={link.callback(|app| Msg::Updated(app))}
+                application={self.application.clone()}
                 />
             </div>
         }

@@ -1,34 +1,35 @@
 use yew::prelude::*;
 
-use crate::{ Status };
+use crate::{ Status, Application };
 
 #[derive(Properties, PartialEq)]
 pub struct ApplicationModalProps {
     pub on_close: Callback<()>,
-    pub on_submit: Callback<(String, Status)>,
+    pub on_submit: Callback<Application>,
     pub is_open: bool
 }
 
-pub struct ApplicationModal {
-    application_id: String,
-    status: String,
+pub struct AddApplicationModal {
+    application: Application,
     is_open: bool,
 }
 
-pub enum ApplicationModalMsg {
+pub enum Msg {
     UpdateApplicationId(String),
     UpdateStatus(String),
+    UpdateTitle(String),
+    UpdateLocation(String),
     Submit,
     Close,
     Open,
 }
 
-impl Component for ApplicationModal {
-    type Message = ApplicationModalMsg;
+impl Component for AddApplicationModal {
+    type Message = Msg;
     type Properties = ApplicationModalProps;
 
     fn create(ctx: &Context<Self>) -> Self {
-        Self { application_id:"".to_string(), status: "".to_string(), is_open: ctx.props().is_open }
+        Self { application: Application {application_id: "".to_string(), status: Status::from_str("Pending"), job_title: "".to_string(), location: "".to_string()}, is_open: ctx.props().is_open.clone() }
     }
 
     fn changed(&mut self, ctx: &Context<Self>) -> bool {
@@ -38,26 +39,34 @@ impl Component for ApplicationModal {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            ApplicationModalMsg::UpdateApplicationId(id) => {
-                self.application_id = id;
+            Msg::UpdateApplicationId(id) => {
+                self.application.application_id = id;
                 true
             }
-            ApplicationModalMsg::UpdateStatus(status) => {
-                self.status = status;
+            Msg::UpdateStatus(status) => {
+                self.application.status = Status::from_str(&status);
                 true
             }
-            ApplicationModalMsg::Submit => {
-                ctx.props().on_submit.emit((self.application_id.clone(), Status::from_str(self.status.as_str())));
+            Msg::UpdateTitle(job_title) => {
+                self.application.job_title = job_title;
+                true
+            }
+            Msg::UpdateLocation(location) => {
+                self.application.location = location;
+                true
+            }
+            Msg::Submit => {
+                ctx.props().on_submit.emit(self.application.clone());
                 ctx.props().on_close.emit(());
                 self.is_open = false;
                 true
             }
-            ApplicationModalMsg::Close => {
+            Msg::Close => {
                 ctx.props().on_close.emit(());
                 self.is_open = false;
                 true
             }
-            ApplicationModalMsg::Open => {
+            Msg::Open => {
                 self.is_open = true;
                 true
             }
@@ -71,27 +80,59 @@ impl Component for ApplicationModal {
 
         let link = ctx.link();
         html! {
-            <div class="modal-overlay">
+            <div class="modal">
                 <div class="modal-content">
                     <h2>{ "Add Application" }</h2>
-                    <input
-                        placeholder="Application ID"
-                        value={self.application_id.clone()}
-                        oninput={link.callback(|e: InputEvent| {
-                            let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
-                            ApplicationModalMsg::UpdateApplicationId(value)
-                        })}
-                    />
-                    <input
-                        placeholder="Status"
-                        value={self.status.clone()}
-                        oninput={link.callback(|e: InputEvent| {
-                            let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
-                            ApplicationModalMsg::UpdateStatus(value)
-                        })}
-                    />
-                    <button onclick={link.callback(|_| ApplicationModalMsg::Submit)}>{ "Submit" }</button>
-                    <button onclick={link.callback(|_| ApplicationModalMsg::Close)}>{ "Close" }</button>
+                    <form class="modal-form">
+                        <input
+                            placeholder="Application ID"
+                            value={self.application.application_id.clone()}
+                            oninput={link.callback(|e: InputEvent| {
+                                let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
+                                Msg::UpdateApplicationId(value)
+                            })}
+                        />
+                        <br/>
+                        <input
+                            placeholder="Job Title"
+                            value={self.application.job_title.clone()}
+                            oninput={link.callback(|e: InputEvent| {
+                                let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
+                                Msg::UpdateTitle(value)
+                            })}
+                        />
+                        <br/>
+                        <input
+                            placeholder="Location"
+                            value={self.application.location.clone()}
+                            oninput={link.callback(|e: InputEvent| {
+                                let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
+                                Msg::UpdateLocation(value)
+                            })}
+                        />
+                        <br/>
+                        <select
+                            onchange={link.callback(|e: web_sys::Event| {
+                                let value = e.target_unchecked_into::<web_sys::HtmlSelectElement>().value();
+                                Msg::UpdateStatus(value)
+                            })}
+                        >
+                        {
+                            for vec!["Applied", "InProgress", "Interviewing", "Rejected"].iter().map(|status| html! {
+                                <option 
+                                    value={status.to_string()}
+                                    selected={self.application.status.as_str() == *status}>
+                                    { status }
+                                </option>
+                            })
+                        }
+                        </select>
+                        <br/>
+                    </form>
+                    <div class="modal-actions">
+                        <button onclick={link.callback(|_| Msg::Submit)}>{ "Submit" }</button>
+                        <button onclick={link.callback(|_| Msg::Close)}>{ "Close" }</button>
+                    </div>
                 </div>
             </div>
         } 

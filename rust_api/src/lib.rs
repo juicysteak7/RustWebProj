@@ -55,12 +55,14 @@ pub enum Status {
 #[derive(Debug, Serialize, serde::Deserialize, Clone)]
 pub struct Application {
     application_id: String,
-    status: Status
+    status: Status,
+    job_title: String,
+    location: String,
 }
 
 impl Application {
-    pub fn new(application_id:String, status:Status) -> Application{
-        Application { application_id, status }
+    pub fn new(application_id:String, status:Status, job_title:String, location:String) -> Application{
+        Application { application_id, status, job_title, location}
     }
 }
 

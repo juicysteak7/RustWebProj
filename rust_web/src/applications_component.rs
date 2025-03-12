@@ -4,7 +4,7 @@ use wasm_bindgen_futures::spawn_local;
 // use serde::Deserialize;
 // use serde::Serialize;
 // use serde_json;
-use crate::{ Application, ApplicationComponent, ApplicationModal, Status };
+use crate::{ Application, ApplicationComponent, AddApplicationModal, Status };
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct ApplicationData {
@@ -102,22 +102,24 @@ impl Component for ApplicationsComponent {
     fn view(&self, ctx: &Context<Self>) -> Html{
         let link = ctx.link();
         html! {
-            <div>
+            <div class="applications-container">
                 <h2>{"Applications"}</h2>
                 <button onclick={link.callback(|_| Msg::Fetch)}>{ "Fetch Applications" }</button>
                 <button onclick={link.callback(|_| Msg::OpenModal)}>{ "Add Application" }</button>
-                { for self.applications.applications.iter().map(|app| html!{
-                    <ApplicationComponent 
-                        application={ Application{application_id: app.application_id.clone(), status: app.status.clone() } } 
-                        application_delete={link.callback(|app| Msg::DeleteApplication(app))}
-                    />
-                }) }
-
-                <ApplicationModal
+                <AddApplicationModal
                     is_open={self.is_modal_open}
                     on_close={link.callback(|_| Msg::CloseModal)}
-                    on_submit={link.callback(|(id, status): (String, Status)| Msg::Add(Application{application_id: id, status:Status::from_str(status.as_str()) }))}
+                    on_submit={link.callback(|app| Msg::Add(app))}
                 />
+
+                { for self.applications.applications.iter().map(|app| html!{
+                    <div class="applications-list">
+                        <ApplicationComponent
+                            application={ app.clone() } 
+                            application_delete={link.callback(|app| Msg::DeleteApplication(app))}
+                        />
+                    </div>
+                }) }
             </div>
         }
     }
