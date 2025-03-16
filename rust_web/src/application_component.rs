@@ -2,6 +2,8 @@ use yew::prelude::*;
 use serde_json;
 use reqwest::Client;
 use wasm_bindgen_futures::spawn_local;
+use wasm_bindgen::JsCast;
+use crate::TodoList;
 
 use crate::{ UpdateApplicationModal, ApplicationData };
 
@@ -37,9 +39,13 @@ impl Status {
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct Application {
     pub application_id: String,
+    pub company: String,
     pub status: Status,
     pub job_title: String,
     pub location: String,
+    pub link: String,
+    pub application_date: String,
+    pub tasks: Vec<String>,
 }
 
 pub enum Msg {
@@ -53,7 +59,7 @@ pub enum Msg {
 #[derive(Properties, PartialEq)]
 pub struct ApplicationProps {
     pub application: Application,
-    pub application_delete: Callback<Application>
+    pub application_delete: Callback<Application>,
 }
 
 pub struct ApplicationComponent {
@@ -120,14 +126,30 @@ impl Component for ApplicationComponent {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let link = ctx.link();
+        // Disable background scroll and pointer events when modal is open
+        if let Some(body) = web_sys::window().unwrap().document().unwrap().body() {
+            let body: web_sys::Element = body.unchecked_into();
+            let new_class = if self.is_modal_open { "modal-open" } else { "" };
+            body.set_attribute("class", new_class).unwrap();
+        }
+
+        // Change class of application card when modal is open
+        if let Some(element) = web_sys::window().unwrap().document().unwrap().get_element_by_id(&self.application.application_id) {
+            let element: web_sys::Element = element.unchecked_into();
+            let new_class = if self.is_modal_open { "application-card-modal-open" } else { "application-card" };
+            element.set_attribute("class", new_class).unwrap();
+        }
+
         html! {
-            <div class="application-card">
+            <div id={self.application.application_id.clone()} class="application-card">
                 <p>{"Application Id: "}{self.application.application_id.clone()}</p>
+                <p>{"Company: "}{self.application.company.clone()}</p>
                 <p>{"Job Title: "}{self.application.job_title.clone()}</p>
-                <p>{"Status: "}{self.application.status.as_str()}</p>
                 <p>{"Location: "}{self.application.location.clone()}</p>
-                <button onclick={link.callback(|_| Msg::OpenModal)}> {"Update"} </button>
-                <button onclick={link.callback(|_| Msg::Delete)}> {"Delete"} </button>
+                <p>{"Status: "}{self.application.status.as_str()}</p>
+                <p>{"Date Applied: "}{self.application.application_date.clone()}</p>
+                <a href={self.application.link.clone()} target="_blank">{"To Application"}</a>
+                <br/>
 
                 <UpdateApplicationModal
                 is_open={self.is_modal_open}
@@ -135,6 +157,10 @@ impl Component for ApplicationComponent {
                 on_submit={link.callback(|app| Msg::Updated(app))}
                 application={self.application.clone()}
                 />
+
+                <TodoList application={self.application.clone()} tasks={self.application.tasks.clone()} on_update={link.callback(|app| Msg::Updated(app))} key={self.application.application_id.clone()}/>
+                <button style="margin-top: 10px" onclick={link.callback(|_| Msg::OpenModal)}> {"Update"} </button>
+                <button onclick={link.callback(|_| Msg::Delete)}> {"Delete"} </button>
             </div>
         }
     }

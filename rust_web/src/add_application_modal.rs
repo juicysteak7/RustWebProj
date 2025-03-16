@@ -6,7 +6,8 @@ use crate::{ Status, Application };
 pub struct ApplicationModalProps {
     pub on_close: Callback<()>,
     pub on_submit: Callback<Application>,
-    pub is_open: bool
+    pub is_open: bool,
+    pub application_id: usize,
 }
 
 pub struct AddApplicationModal {
@@ -15,10 +16,13 @@ pub struct AddApplicationModal {
 }
 
 pub enum Msg {
-    UpdateApplicationId(String),
+    // UpdateApplicationId(String),
     UpdateStatus(String),
     UpdateTitle(String),
     UpdateLocation(String),
+    UpdateLink(String),
+    UpdateCompany(String),
+    UpdateDate(String),
     Submit,
     Close,
     Open,
@@ -29,20 +33,22 @@ impl Component for AddApplicationModal {
     type Properties = ApplicationModalProps;
 
     fn create(ctx: &Context<Self>) -> Self {
-        Self { application: Application {application_id: "".to_string(), status: Status::from_str("Pending"), job_title: "".to_string(), location: "".to_string()}, is_open: ctx.props().is_open.clone() }
+        log::info!("app_id: {}", ctx.props().application_id);
+        Self { application: Application {application_id: ctx.props().application_id.to_string(), company: "".to_string(), status: Status::from_str("Pending"), job_title: "".to_string(), location: "".to_string(), application_date: "".to_string(), link:  "".to_string(), tasks: Vec::new()}, is_open: ctx.props().is_open.clone() }
     }
 
     fn changed(&mut self, ctx: &Context<Self>) -> bool {
         self.is_open = ctx.props().is_open;
+        self.application.application_id = ctx.props().application_id.to_string();
         true
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::UpdateApplicationId(id) => {
-                self.application.application_id = id;
-                true
-            }
+            // Msg::UpdateApplicationId(id) => {
+            //     self.application.application_id = id;
+            //     true
+            // }
             Msg::UpdateStatus(status) => {
                 self.application.status = Status::from_str(&status);
                 true
@@ -58,6 +64,14 @@ impl Component for AddApplicationModal {
             Msg::Submit => {
                 ctx.props().on_submit.emit(self.application.clone());
                 ctx.props().on_close.emit(());
+                // Clear input fields
+                self.application.application_id.clear();
+                self.application.application_date.clear();
+                self.application.company.clear();
+                self.application.status = Status::from_str("Pending");
+                self.application.job_title.clear();
+                self.application.location.clear();
+                self.application.link.clear();
                 self.is_open = false;
                 true
             }
@@ -68,6 +82,18 @@ impl Component for AddApplicationModal {
             }
             Msg::Open => {
                 self.is_open = true;
+                true
+            }
+            Msg::UpdateLink(link) => {
+                self.application.link = link;
+                true
+            }
+            Msg::UpdateCompany(company) => {
+                self.application.company = company;
+                true
+            }
+            Msg::UpdateDate(date) => {
+                self.application.application_date = date;
                 true
             }
         }
@@ -84,15 +110,17 @@ impl Component for AddApplicationModal {
                 <div class="modal-content">
                     <h2>{ "Add Application" }</h2>
                     <form class="modal-form">
+                    <div class="input-container">
                         <input
-                            placeholder="Application ID"
-                            value={self.application.application_id.clone()}
+                            placeholder="Company"
+                            value={self.application.company.clone()}
                             oninput={link.callback(|e: InputEvent| {
                                 let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
-                                Msg::UpdateApplicationId(value)
+                                Msg::UpdateCompany(value)
                             })}
                         />
-                        <br/>
+                    </div>
+                    <div class="input-container">
                         <input
                             placeholder="Job Title"
                             value={self.application.job_title.clone()}
@@ -101,7 +129,8 @@ impl Component for AddApplicationModal {
                                 Msg::UpdateTitle(value)
                             })}
                         />
-                        <br/>
+                    </div>
+                    <div class="input-container">
                         <input
                             placeholder="Location"
                             value={self.application.location.clone()}
@@ -110,7 +139,27 @@ impl Component for AddApplicationModal {
                                 Msg::UpdateLocation(value)
                             })}
                         />
-                        <br/>
+                    </div>
+                    <div class="input-container">
+                        <input
+                            placeholder="Date of Application"
+                            value={self.application.application_date.clone()}
+                            oninput={link.callback(|e: InputEvent| {
+                                let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
+                                Msg::UpdateDate(value)
+                            })}
+                        />
+                    </div>
+                    <div class="input-container">
+                        <input
+                            placeholder="Application Link"
+                            value={self.application.link.clone()}
+                            oninput={link.callback(|e: InputEvent| {
+                                let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
+                                Msg::UpdateLink(value)
+                            })}
+                        />
+                    </div>
                         <select
                             onchange={link.callback(|e: web_sys::Event| {
                                 let value = e.target_unchecked_into::<web_sys::HtmlSelectElement>().value();
@@ -127,7 +176,6 @@ impl Component for AddApplicationModal {
                             })
                         }
                         </select>
-                        <br/>
                     </form>
                     <div class="modal-actions">
                         <button onclick={link.callback(|_| Msg::Submit)}>{ "Submit" }</button>

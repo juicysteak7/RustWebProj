@@ -26,7 +26,7 @@ fn app() -> Html {
 
     html! {
         <div>
-            <ApplicationsComponent applications={ (*init).clone() }/>
+            <ApplicationsComponent applications={ (*init).applications.clone() }/>
         </div>
     }
 }

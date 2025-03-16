@@ -55,14 +55,18 @@ pub enum Status {
 #[derive(Debug, Serialize, serde::Deserialize, Clone)]
 pub struct Application {
     application_id: String,
+    company: String,
     status: Status,
     job_title: String,
     location: String,
+    link: String,
+    application_date: String,
+    tasks: Vec<String>,
 }
 
 impl Application {
-    pub fn new(application_id:String, status:Status, job_title:String, location:String) -> Application{
-        Application { application_id, status, job_title, location}
+    pub fn new(application_id:String, company: String, status:Status, job_title:String, location:String, link:String, application_date: String, tasks:Vec<String>) -> Application{
+        Application { application_id, company, status, job_title, location, link, application_date, tasks}
     }
 }
 

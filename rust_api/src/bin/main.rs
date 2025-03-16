@@ -1,16 +1,8 @@
-use rust_api::Application;
-use rust_api::DataBase;
-use rust_api::Applications;
+use rust_api::{ Application, DataBase, Applications };
 use serde::Serialize;
 use tokio;
 use tokio::net::TcpListener;
-use axum::{
-    extract::{Path, Json},
-    response::IntoResponse,
-    routing::put,
-    routing::get,
-    Router,
-};
+use axum::{ extract::Json, routing::put, routing::get, Router };
 use tower_http::cors::{CorsLayer, Any};
 use std::net::SocketAddr;
 

@@ -6,9 +6,12 @@ pub enum Msg {
     Submit,
     Close,
     UpdateStatus(String),
-    UpdateApplicationId(String),
+    // UpdateApplicationId(String),
     UpdateTitle(String),
     UpdateLocation(String),
+    UpdateLink(String),
+    UpdateCompany(String),
+    UpdateDate(String),
 }
 
 #[derive(Properties, PartialEq)]
@@ -47,10 +50,10 @@ impl Component for UpdateApplicationModal {
                 self.is_open = false;
                 true
             }
-            Msg::UpdateApplicationId(application_id) => {
-                self.application.application_id = application_id;
-                true
-            }
+            // Msg::UpdateApplicationId(application_id) => {
+            //     self.application.application_id = application_id;
+            //     true
+            // }
             Msg::UpdateStatus(status) => {
                 self.application.status = Status::from_str(&status);
                 true
@@ -63,6 +66,18 @@ impl Component for UpdateApplicationModal {
                 self.application.location = location;
                 true
             }
+            Msg::UpdateLink(link) => {
+                self.application.link = link;
+                true
+            } 
+            Msg::UpdateCompany(company)=> {
+                self.application.company = company;
+                true
+            }
+            Msg::UpdateDate(date) => {
+                self.application.application_date = date;
+                true
+            }
         }
     }
     fn view(&self, ctx: &Context<Self>) -> Html {
@@ -73,18 +88,21 @@ impl Component for UpdateApplicationModal {
         }
         let link = ctx.link();
         html! {
-            <div class="modal">
+            <div class="sub-modal">
                 <div class="modal-content">
                     <h2>{ "Update Application" }</h2>
                     <form class="modal-form">
+                    <div class="input-container">
                         <input
-                            placeholder={self.application.application_id.clone()}
-                            value={self.application.application_id.clone()}
+                            placeholder="Company"
+                            value={self.application.company.clone()}
                             oninput={link.callback(|e: InputEvent| {
                                 let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
-                                Msg::UpdateApplicationId(value)
+                                Msg::UpdateCompany(value)
                             })}
                         />
+                    </div>
+                    <div class="input-container">
                         <input
                             placeholder={self.application.job_title.clone()}
                             value={self.application.job_title.clone()}
@@ -93,14 +111,37 @@ impl Component for UpdateApplicationModal {
                                 Msg::UpdateTitle(value)
                             })}
                         />
+                    </div>
+                    <div class="input-container">
                         <input
-                            placeholder="Location"
+                            placeholder={self.application.location.clone()}
                             value={self.application.location.clone()}
                             oninput={link.callback(|e: InputEvent| {
                                 let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
                                 Msg::UpdateLocation(value)
                             })}
                         />
+                    </div>
+                    <div class="input-container">
+                        <input
+                            placeholder={self.application.application_date.clone()}
+                            value={self.application.application_date.clone()}
+                            oninput={link.callback(|e: InputEvent| {
+                                let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
+                                Msg::UpdateDate(value)
+                            })}
+                        />
+                    </div>
+                    <div class="input-container">
+                        <input
+                            placeholder={self.application.link.clone()}
+                            value={self.application.link.clone()}
+                            oninput={link.callback(|e: InputEvent| {
+                                let value = e.target_unchecked_into::<web_sys::HtmlInputElement>().value();
+                                Msg::UpdateLink(value)
+                            })}
+                        />
+                    </div>
                         <select
                             onchange={link.callback(|e: web_sys::Event| {
                                 let value = e.target_unchecked_into::<web_sys::HtmlSelectElement>().value();
