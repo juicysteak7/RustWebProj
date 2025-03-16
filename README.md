@@ -1,6 +1,7 @@
 # RustWebProj
 This project is built to track job applications.
 Ensure you have rust and cargo installed before following further instructions.
+
 [Rust Install](https://www.rust-lang.org/tools/install)
 
 # Front-end
@@ -35,6 +36,7 @@ cargo run
 
 # Database
 The database this project uses is SurrealDB
+
 [SurrealDB Install](https://surrealdb.com/start)
 
 Once surrealdb is installed you can use the following command to start the database
